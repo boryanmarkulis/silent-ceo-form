@@ -14,6 +14,8 @@ export default function ForestVideoBackdrop({
   isTransitioning,
 }: ForestVideoBackdropProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const previousStepRef = useRef(currentStep)
+  const reverseAnimationRef = useRef<number | null>(null)
   const prefersReducedMotion = usePrefersReducedMotion()
 
   useEffect(() => {
@@ -30,17 +32,85 @@ export default function ForestVideoBackdrop({
     const video = videoRef.current
     if (!video || prefersReducedMotion || !Number.isFinite(video.duration) || video.duration <= 0) return
 
-    syncVideoToStep(video)
+    const previousStep = previousStepRef.current
+    if (currentStep > previousStep) {
+      cancelReverseAnimation()
+      syncVideoToStep(video, 'forward')
+    } else if (currentStep < previousStep) {
+      scrubVideoBackward(video)
+    }
+    previousStepRef.current = currentStep
   }, [currentStep, totalSteps, prefersReducedMotion])
 
-  function syncVideoToStep(video: HTMLVideoElement) {
-    const usableDuration = Math.max(video.duration - 1.5, 1)
-    const progress = totalSteps <= 1 ? 0 : currentStep / (totalSteps - 1)
-    const targetTime = Math.min(usableDuration, Math.max(0, progress * usableDuration))
+  useEffect(() => {
+    return () => cancelReverseAnimation()
+  }, [])
 
-    if (Math.abs(video.currentTime - targetTime) > 5) {
+  function syncVideoToStep(video: HTMLVideoElement, direction: 'forward' | 'backward') {
+    const targetTime = getStepTargetTime(video)
+
+    if (direction === 'backward') {
+      video.currentTime = targetTime
+    } else if (video.currentTime + 5 < targetTime) {
       video.currentTime = targetTime
     }
+  }
+
+  function getStepTargetTime(video: HTMLVideoElement) {
+    const usableDuration = Math.max(video.duration - 1.5, 1)
+    const progress = totalSteps <= 1 ? 0 : currentStep / (totalSteps - 1)
+    return Math.min(usableDuration, Math.max(0, progress * usableDuration))
+  }
+
+  function scrubVideoBackward(video: HTMLVideoElement) {
+    cancelReverseAnimation()
+
+    const startTime = video.currentTime
+    const targetTime = getStepTargetTime(video)
+    if (startTime <= targetTime) {
+      video.currentTime = targetTime
+      return
+    }
+
+    const duration = 620
+    const startedAt = performance.now()
+    video.pause()
+
+    function tick(now: number) {
+      const elapsed = now - startedAt
+      const progress = Math.min(1, elapsed / duration)
+      const eased = 1 - Math.pow(1 - progress, 3)
+
+      video.currentTime = startTime + (targetTime - startTime) * eased
+
+      if (progress < 1) {
+        reverseAnimationRef.current = requestAnimationFrame(tick)
+        return
+      }
+
+      video.currentTime = targetTime
+      reverseAnimationRef.current = null
+      video.playbackRate = 0.42
+      void video.play().catch(() => {
+        // The static fallback remains in place if the browser refuses playback.
+      })
+    }
+
+    reverseAnimationRef.current = requestAnimationFrame(tick)
+  }
+
+  function cancelReverseAnimation() {
+    if (reverseAnimationRef.current === null) return
+    cancelAnimationFrame(reverseAnimationRef.current)
+    reverseAnimationRef.current = null
+  }
+
+  function replayVideo(video: HTMLVideoElement) {
+    cancelReverseAnimation()
+    video.currentTime = 0
+    void video.play().catch(() => {
+      // The static fallback remains in place if the browser refuses playback.
+    })
   }
 
   const videoStyle = useMemo(
@@ -59,10 +129,10 @@ export default function ForestVideoBackdrop({
           muted
           playsInline
           autoPlay
-          loop
           preload="auto"
           style={videoStyle}
-          onLoadedMetadata={event => syncVideoToStep(event.currentTarget)}
+          onLoadedMetadata={event => syncVideoToStep(event.currentTarget, 'forward')}
+          onEnded={event => replayVideo(event.currentTarget)}
         />
       )}
       <div className="forest-grade" />

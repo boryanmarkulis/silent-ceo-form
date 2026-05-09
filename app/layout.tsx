@@ -8,10 +8,10 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'A few questions',
+  title: 'silent',
   description: "We're building something quiet for people running real businesses.",
   openGraph: {
-    title: 'A few questions',
+    title: 'silent',
     description: "We're building something quiet for people running real businesses.",
   },
 }

@@ -116,7 +116,10 @@ export default function FormFlow() {
       const typingElement = activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement
       const keyboardOpen = typingElement && keyboardInset > 80
 
-      document.documentElement.style.setProperty('--visual-viewport-height', `${visualViewport.height}px`)
+      document.documentElement.style.setProperty(
+        '--visual-viewport-height',
+        keyboardOpen ? `${visualViewport.height}px` : '100dvh',
+      )
       document.documentElement.classList.toggle('keyboard-open', keyboardOpen)
     }
 
@@ -149,12 +152,12 @@ export default function FormFlow() {
       return scrollable.scrollTop > 1
     }
 
-    function handleWheel(event: WheelEvent) {
-      if (Math.abs(event.deltaY) < 36 || isTransitioning || canScrollInsideCard(event.target, event.deltaY)) {
+    function advanceFromScroll(deltaY: number, target: EventTarget | null) {
+      if (Math.abs(deltaY) < 36 || isTransitioning || canScrollInsideCard(target, deltaY)) {
         return
       }
 
-      if (event.deltaY < 0) {
+      if (deltaY < 0) {
         handleBack()
         return
       }
@@ -169,8 +172,44 @@ export default function FormFlow() {
       }
     }
 
+    function handleWheel(event: WheelEvent) {
+      advanceFromScroll(event.deltaY, event.target)
+    }
+
+    let touchStartY = 0
+    let touchStartX = 0
+    let touchTarget: EventTarget | null = null
+
+    function handleTouchStart(event: TouchEvent) {
+      const touch = event.touches[0]
+      if (!touch) return
+
+      touchStartY = touch.clientY
+      touchStartX = touch.clientX
+      touchTarget = event.target
+    }
+
+    function handleTouchEnd(event: TouchEvent) {
+      const touch = event.changedTouches[0]
+      if (!touch) return
+
+      const deltaY = touchStartY - touch.clientY
+      const deltaX = touchStartX - touch.clientX
+      if (Math.abs(deltaY) < 48 || Math.abs(deltaY) < Math.abs(deltaX) * 1.2) {
+        return
+      }
+
+      advanceFromScroll(deltaY, touchTarget)
+    }
+
     window.addEventListener('wheel', handleWheel, { passive: true })
-    return () => window.removeEventListener('wheel', handleWheel)
+    window.addEventListener('touchstart', handleTouchStart, { passive: true })
+    window.addEventListener('touchend', handleTouchEnd, { passive: true })
+    return () => {
+      window.removeEventListener('wheel', handleWheel)
+      window.removeEventListener('touchstart', handleTouchStart)
+      window.removeEventListener('touchend', handleTouchEnd)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [safeCurrentStep, isTransitioning, formData])
 
