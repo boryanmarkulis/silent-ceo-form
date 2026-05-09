@@ -14,7 +14,7 @@ interface SectionBreakProps {
 
 export default function SectionBreak({ heading, subhead, onContinue, currentQ, totalQ }: SectionBreakProps) {
   useEffect(() => {
-    const timer = setTimeout(onContinue, 1800)
+    const timer = setTimeout(onContinue, 10000)
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
         clearTimeout(timer)
@@ -40,7 +40,7 @@ export default function SectionBreak({ heading, subhead, onContinue, currentQ, t
           onClick={onContinue}
           className="text-button"
         >
-          Continue
+          Scroll to continue ↓
         </button>
       </GlassStepCard>
     </main>

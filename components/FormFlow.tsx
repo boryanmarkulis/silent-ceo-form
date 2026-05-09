@@ -32,6 +32,32 @@ function buildSteps(): Step[] {
 
 const STEPS = buildSteps()
 const TOTAL_QUESTIONS = allQuestions.length // 15
+const TYPING_QUESTION_TYPES = new Set<QuestionType['type']>(['text', 'email', 'url'])
+
+function hasQuestionAnswer(question: QuestionType, value: string | string[] | undefined): boolean {
+  if (question.optional && (value === undefined || (typeof value === 'string' && value.trim() === ''))) {
+    return true
+  }
+
+  if (Array.isArray(value)) {
+    return value.length > 0
+  }
+
+  if (typeof value !== 'string') {
+    return false
+  }
+
+  const trimmed = value.trim()
+  if (!question.optional && question.validation === 'required' && trimmed === '') {
+    return false
+  }
+
+  if (question.validation === 'email' && trimmed !== '') {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)
+  }
+
+  return trimmed !== '' || Boolean(question.optional)
+}
 
 function countAnsweredQuestions(stepIndex: number): number {
   let count = 0
@@ -54,14 +80,61 @@ export default function FormFlow() {
     setRefParam(params.get('ref') ?? '')
   }, [])
 
-  const step = STEPS[currentStep]
-  const completedQ = countAnsweredQuestions(currentStep)
+  const safeCurrentStep = Math.min(currentStep, STEPS.length - 1)
+  const step = STEPS[safeCurrentStep]
+  const completedQ = countAnsweredQuestions(safeCurrentStep)
+
+  useEffect(() => {
+    if (currentStep >= STEPS.length) {
+      setCurrentStep(STEPS.length - 1)
+    }
+  }, [currentStep])
 
   useEffect(() => {
     if (!isTransitioning) return
     const timer = setTimeout(() => setIsTransitioning(false), 720)
     return () => clearTimeout(timer)
   }, [isTransitioning])
+
+  useEffect(() => {
+    const activeStep = STEPS[safeCurrentStep]
+    const acceptsTyping = activeStep.kind === 'question' && TYPING_QUESTION_TYPES.has(activeStep.question.type)
+
+    if (!acceptsTyping && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
+  }, [safeCurrentStep])
+
+  useEffect(() => {
+    const viewport = window.visualViewport
+    if (!viewport) return
+    const visualViewport = viewport
+
+    function syncKeyboardViewport() {
+      const keyboardInset = Math.max(0, window.innerHeight - visualViewport.height - visualViewport.offsetTop)
+      const activeElement = document.activeElement
+      const typingElement = activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement
+      const keyboardOpen = typingElement && keyboardInset > 80
+
+      document.documentElement.style.setProperty('--visual-viewport-height', `${visualViewport.height}px`)
+      document.documentElement.classList.toggle('keyboard-open', keyboardOpen)
+    }
+
+    syncKeyboardViewport()
+    visualViewport.addEventListener('resize', syncKeyboardViewport)
+    visualViewport.addEventListener('scroll', syncKeyboardViewport)
+    window.addEventListener('focusin', syncKeyboardViewport)
+    window.addEventListener('focusout', syncKeyboardViewport)
+
+    return () => {
+      visualViewport.removeEventListener('resize', syncKeyboardViewport)
+      visualViewport.removeEventListener('scroll', syncKeyboardViewport)
+      window.removeEventListener('focusin', syncKeyboardViewport)
+      window.removeEventListener('focusout', syncKeyboardViewport)
+      document.documentElement.classList.remove('keyboard-open')
+      document.documentElement.style.removeProperty('--visual-viewport-height')
+    }
+  }, [])
 
   useEffect(() => {
     function canScrollInsideCard(target: EventTarget | null, deltaY: number) {
@@ -81,35 +154,45 @@ export default function FormFlow() {
         return
       }
 
-      const activeStep = STEPS[currentStep]
-      if (activeStep.kind === 'question') return
+      if (event.deltaY < 0) {
+        handleBack()
+        return
+      }
 
-      if (event.deltaY > 0) {
+      const activeStep = STEPS[safeCurrentStep]
+      if (activeStep.kind === 'question') {
+        const q = activeStep.question
+        if (!hasQuestionAnswer(q, formData[q.id])) return
         handleNext()
       } else {
-        handleBack()
+        handleNext()
       }
     }
 
     window.addEventListener('wheel', handleWheel, { passive: true })
     return () => window.removeEventListener('wheel', handleWheel)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep, isTransitioning])
+  }, [safeCurrentStep, isTransitioning, formData])
 
   function handleNext(value?: string | string[]) {
-    const currentStepData = STEPS[currentStep]
-    if (currentStepData.kind === 'question' && value !== undefined) {
-      setFormData(prev => ({ ...prev, [currentStepData.question.id]: value }))
+    const currentStepData = STEPS[safeCurrentStep]
+    const updatedData = currentStepData.kind === 'question' && value !== undefined
+      ? { ...formData, [currentStepData.question.id]: value }
+      : formData
+
+    if (currentStepData.kind === 'question') {
+      const answer = value ?? formData[currentStepData.question.id]
+      if (!hasQuestionAnswer(currentStepData.question, answer)) return
+      if (value !== undefined) {
+        setFormData(updatedData)
+      }
     }
 
-    const nextIndex = currentStep + 1
+    const nextIndex = safeCurrentStep + 1
     if (nextIndex >= STEPS.length) return
 
     // When advancing past the last question (email) to closing, trigger submit
     if (STEPS[nextIndex].kind === 'closing') {
-      const updatedData = currentStepData.kind === 'question' && value !== undefined
-        ? { ...formData, [currentStepData.question.id]: value }
-        : formData
       triggerSubmit(updatedData)
     }
 
@@ -121,6 +204,10 @@ export default function FormFlow() {
     if (currentStep <= 0) return
     setIsTransitioning(true)
     setCurrentStep(prev => prev - 1)
+  }
+
+  function handleDraft(questionId: string, value: string | string[]) {
+    setFormData(prev => ({ ...prev, [questionId]: value }))
   }
 
   async function triggerSubmit(data: Record<string, string | string[]>) {
@@ -152,14 +239,14 @@ export default function FormFlow() {
   return (
     <div className="forest-shell">
       <ForestVideoBackdrop
-        currentStep={currentStep}
+        currentStep={safeCurrentStep}
         totalSteps={STEPS.length}
         isTransitioning={isTransitioning}
       />
 
       <AnimatePresence mode="wait">
         <motion.div
-          key={currentStep}
+          key={safeCurrentStep}
           initial={{ opacity: 0, y: 24, filter: 'blur(8px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           exit={{ opacity: 0, y: -12, filter: 'blur(6px)' }}
@@ -187,16 +274,15 @@ export default function FormFlow() {
             <Question
               question={step.question}
               questionNumber={questionIndex + 1}
+              answer={formData[step.question.id]}
+              onDraft={value => handleDraft(step.question.id, value)}
               onAnswer={value => handleNext(value)}
-              onBack={handleBack}
-              showBack={currentStep > 0}
               totalQ={TOTAL_QUESTIONS}
             />
           )}
 
           {step.kind === 'closing' && (
             <Closing
-              email={typeof formData.email === 'string' ? formData.email : ''}
               submitError={submitError}
               onRetry={handleRetry}
               currentQ={TOTAL_QUESTIONS}

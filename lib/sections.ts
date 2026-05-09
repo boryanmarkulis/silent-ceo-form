@@ -191,14 +191,15 @@ export const section3: Section = {
     {
       id: 'ai_coo_first',
       type: 'text',
-      text: "If something watched your business 24/7 and pinged you when it needed your attention - what's the first thing you'd want it watching?",
+      text: 'If someone could watch your business 24/7, what would you want them tracking?',
+      hint: 'Pick something they could wake you up at 2am for.',
       placeholder: 'Be specific if you can',
       validation: 'required',
     },
     {
       id: 'pricing',
       type: 'singleChoice',
-      text: "If this tool saved you 5 hours a month and caught two problems you'd have missed - what would it be worth?",
+      text: 'If they caught two problems you would have missed, what would that be worth?',
       hint: 'Per month',
       options: [
         { value: '50', label: '€50' },
@@ -224,7 +225,6 @@ export const section4: Section = {
       text: "What's your name?",
       placeholder: 'Your name',
       optional: true,
-      hint: 'Optional',
     },
     {
       id: 'email',

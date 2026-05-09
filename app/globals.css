@@ -34,6 +34,10 @@ body {
   overflow-x: hidden;
 }
 
+html {
+  --visual-viewport-height: 100dvh;
+}
+
 input,
 textarea,
 select {
@@ -61,7 +65,7 @@ textarea:focus-visible {
   position: relative;
   min-height: 100dvh;
   isolation: isolate;
-  overflow: hidden;
+  overflow: clip;
 }
 
 .forest-video-backdrop {
@@ -110,10 +114,12 @@ textarea:focus-visible {
 
 .screen {
   width: 100%;
-  min-height: 100dvh;
+  height: var(--visual-viewport-height, 100dvh);
   display: grid;
   place-items: center;
   padding: max(1.25rem, env(safe-area-inset-top)) 1rem max(1.25rem, env(safe-area-inset-bottom));
+  overflow-y: auto;
+  transition: padding 240ms var(--ease);
 }
 
 .glass-card {
@@ -178,6 +184,10 @@ textarea:focus-visible {
   line-height: 1.04;
   text-wrap: balance;
   text-shadow: 0 2px 22px rgba(0, 0, 0, 0.22);
+}
+
+.glass-title:first-child {
+  margin-top: 0;
 }
 
 .glass-card-hero .glass-title {
@@ -359,6 +369,11 @@ textarea:focus-visible {
   color: var(--accent);
 }
 
+.scroll-cta-arrow {
+  display: inline-block;
+  margin-left: 0.15rem;
+}
+
 .primary-action {
   min-height: 3.15rem;
   padding: 0 1.25rem;
@@ -448,14 +463,25 @@ textarea:focus-visible {
 
 @media (max-width: 700px) {
   .screen {
+    height: var(--visual-viewport-height, 100dvh);
     place-items: center;
     padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .keyboard-open .screen {
+    place-items: end center;
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+    padding-bottom: 0.65rem;
   }
 
   .glass-card {
     width: min(100%, 36rem);
     max-height: calc(100dvh - 2rem);
     border-radius: 24px;
+  }
+
+  .keyboard-open .glass-card {
+    max-height: calc(var(--visual-viewport-height, 100dvh) - 1.4rem);
   }
 
   .glass-card-header {

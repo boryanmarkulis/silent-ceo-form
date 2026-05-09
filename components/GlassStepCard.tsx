@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react'
 
 interface GlassStepCardProps {
-  meta: string
+  meta?: string
   title: ReactNode
   hint?: ReactNode
   children?: ReactNode
@@ -22,7 +22,7 @@ export default function GlassStepCard({
   return (
     <section className={`glass-card ${tone === 'hero' ? 'glass-card-hero' : ''}`}>
       <div className="glass-card-header">
-        <p className="glass-meta">{meta}</p>
+        {meta && <p className="glass-meta">{meta}</p>}
         <h1 className="glass-title">{title}</h1>
         {hint && <p className="glass-hint">{hint}</p>}
       </div>

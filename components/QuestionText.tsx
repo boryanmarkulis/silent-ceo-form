@@ -5,13 +5,15 @@ import type { Question } from '@/lib/sections'
 
 interface QuestionTextProps {
   question: Question
+  initialValue?: string
+  onDraft: (value: string) => void
   onAnswer: (value: string) => void
 }
 
 const TEXTAREA_IDS = ['numbers_where', 'ai_coo_first']
 
-export default function QuestionText({ question, onAnswer }: QuestionTextProps) {
-  const [value, setValue] = useState('')
+export default function QuestionText({ question, initialValue = '', onDraft, onAnswer }: QuestionTextProps) {
+  const [value, setValue] = useState(initialValue)
   const [error, setError] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -22,7 +24,11 @@ export default function QuestionText({ question, onAnswer }: QuestionTextProps) 
       if (isTextarea) textareaRef.current?.focus()
       else inputRef.current?.focus()
     }, 500)
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+      textareaRef.current?.blur()
+      inputRef.current?.blur()
+    }
   }, [isTextarea])
 
   function autoResize(el: HTMLTextAreaElement) {
@@ -50,6 +56,12 @@ export default function QuestionText({ question, onAnswer }: QuestionTextProps) 
     onAnswer(value.trim())
   }
 
+  function handleChange(nextValue: string) {
+    setValue(nextValue)
+    setError('')
+    onDraft(nextValue)
+  }
+
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter') {
       if (isTextarea && e.shiftKey) return
@@ -58,9 +70,7 @@ export default function QuestionText({ question, onAnswer }: QuestionTextProps) 
     }
   }
 
-  const hintText = question.optional
-    ? 'Optional - press Enter to skip'
-    : 'Press Enter ↵ to continue'
+  const hintText = 'Scroll to continue ↓'
 
   return (
     <div>
@@ -69,7 +79,7 @@ export default function QuestionText({ question, onAnswer }: QuestionTextProps) 
           className="text-field"
           ref={textareaRef}
           value={value}
-          onChange={e => { setValue(e.target.value); setError(''); autoResize(e.target) }}
+          onChange={e => { handleChange(e.target.value); autoResize(e.target) }}
           onKeyDown={handleKeyDown}
           placeholder={question.placeholder}
           rows={2}
@@ -81,7 +91,7 @@ export default function QuestionText({ question, onAnswer }: QuestionTextProps) 
           ref={inputRef}
           type={question.type === 'email' ? 'email' : question.type === 'url' ? 'url' : 'text'}
           value={value}
-          onChange={e => { setValue(e.target.value); setError('') }}
+          onChange={e => handleChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={question.placeholder}
         />

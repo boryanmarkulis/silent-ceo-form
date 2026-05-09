@@ -5,12 +5,14 @@ import type { Question } from '@/lib/sections'
 
 interface QuestionSingleChoiceProps {
   question: Question
+  initialValue?: string
   onAnswer: (value: string) => void
 }
 
-export default function QuestionSingleChoice({ question, onAnswer }: QuestionSingleChoiceProps) {
-  const [selected, setSelected] = useState<number>(-1)
+export default function QuestionSingleChoice({ question, initialValue = '', onAnswer }: QuestionSingleChoiceProps) {
   const options = question.options ?? []
+  const initialSelected = options.findIndex(option => option.value === initialValue)
+  const [selected, setSelected] = useState<number>(initialSelected)
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {

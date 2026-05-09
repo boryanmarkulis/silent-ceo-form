@@ -5,13 +5,18 @@ import type { Question } from '@/lib/sections'
 
 interface QuestionMultiChoiceProps {
   question: Question
+  initialValue?: string[]
+  onDraft: (value: string[]) => void
   onAnswer: (value: string[]) => void
 }
 
-export default function QuestionMultiChoice({ question, onAnswer }: QuestionMultiChoiceProps) {
-  const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [otherChecked, setOtherChecked] = useState(false)
-  const [otherText, setOtherText] = useState('')
+export default function QuestionMultiChoice({ question, initialValue = [], onDraft, onAnswer }: QuestionMultiChoiceProps) {
+  const initialOther = initialValue.find(value => value === 'other' || value.startsWith('other:'))
+  const [selected, setSelected] = useState<Set<string>>(
+    new Set(initialValue.filter(value => value !== 'other' && !value.startsWith('other:')))
+  )
+  const [otherChecked, setOtherChecked] = useState(Boolean(initialOther))
+  const [otherText, setOtherText] = useState(initialOther?.startsWith('other:') ? initialOther.slice(6) : '')
   const otherInputRef = useRef<HTMLInputElement>(null)
   const options = question.options ?? []
 
@@ -39,17 +44,36 @@ export default function QuestionMultiChoice({ question, onAnswer }: QuestionMult
       const next = new Set(prev)
       if (next.has(value)) next.delete(value)
       else next.add(value)
+      onDraft(buildResult(next, otherChecked, otherText))
       return next
     })
   }
 
-  function handleContinue() {
-    const result = Array.from(selected)
-    if (otherChecked && otherText.trim()) {
-      result.push(`other:${otherText.trim()}`)
-    } else if (otherChecked) {
+  function buildResult(selectedValues = selected, includeOther = otherChecked, otherValue = otherText) {
+    const result = Array.from(selectedValues)
+    if (includeOther && otherValue.trim()) {
+      result.push(`other:${otherValue.trim()}`)
+    } else if (includeOther) {
       result.push('other')
     }
+    return result
+  }
+
+  function handleOtherCheckedChange() {
+    setOtherChecked(prev => {
+      const next = !prev
+      onDraft(buildResult(selected, next, otherText))
+      return next
+    })
+  }
+
+  function handleOtherTextChange(value: string) {
+    setOtherText(value)
+    onDraft(buildResult(selected, otherChecked, value))
+  }
+
+  function handleContinue() {
+    const result = buildResult()
     if (result.length === 0) return
     onAnswer(result)
   }
@@ -78,7 +102,7 @@ export default function QuestionMultiChoice({ question, onAnswer }: QuestionMult
           <input
             type="checkbox"
             checked={otherChecked}
-            onChange={() => setOtherChecked(v => !v)}
+            onChange={handleOtherCheckedChange}
             className="native-check"
           />
           <span className="choice-label">Other</span>
@@ -90,7 +114,7 @@ export default function QuestionMultiChoice({ question, onAnswer }: QuestionMult
             ref={otherInputRef}
             type="text"
             value={otherText}
-            onChange={e => setOtherText(e.target.value)}
+            onChange={e => handleOtherTextChange(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (hasSelection) handleContinue() } }}
             placeholder="Please specify..."
           />
@@ -103,13 +127,13 @@ export default function QuestionMultiChoice({ question, onAnswer }: QuestionMult
           className="text-button"
           style={{ marginTop: '1.6rem' }}
         >
-          Continue
+          Scroll to continue ↓
         </button>
       )}
 
       {!hasSelection && (
         <p className="hint-line">
-          Pick at least one option, then press Enter or click Continue
+          Pick at least one option, then scroll to continue ↓
         </p>
       )}
     </div>

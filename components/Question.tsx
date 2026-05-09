@@ -10,13 +10,13 @@ import ProgressBar from './ProgressBar'
 interface QuestionProps {
   question: QuestionType
   questionNumber: number
+  answer?: string | string[]
+  onDraft: (value: string | string[]) => void
   onAnswer: (value: string | string[]) => void
-  onBack: () => void
-  showBack: boolean
   totalQ: number
 }
 
-export default function Question({ question, questionNumber, onAnswer, onBack, showBack, totalQ }: QuestionProps) {
+export default function Question({ question, questionNumber, answer, onDraft, onAnswer, totalQ }: QuestionProps) {
   function handleTextAnswer(value: string) {
     onAnswer(value)
   }
@@ -31,31 +31,34 @@ export default function Question({ question, questionNumber, onAnswer, onBack, s
 
   return (
     <main className="screen">
-      {showBack && (
-        <button
-          onClick={onBack}
-          className="back-button"
-          aria-label="Go back"
-        >
-          ←
-        </button>
-      )}
-
       <GlassStepCard
-        meta={`Question ${questionNumber.toString().padStart(2, '0')}`}
         title={question.text}
         hint={question.hint}
-        footer={<ProgressBar currentQ={questionNumber - 1} totalQ={totalQ} />}
+        footer={<ProgressBar currentQ={questionNumber} totalQ={totalQ} />}
       >
         <section aria-label="Answer">
           {(question.type === 'text' || question.type === 'email' || question.type === 'url') && (
-            <QuestionText question={question} onAnswer={handleTextAnswer} />
+            <QuestionText
+              question={question}
+              initialValue={typeof answer === 'string' ? answer : ''}
+              onDraft={value => onDraft(value)}
+              onAnswer={handleTextAnswer}
+            />
           )}
           {question.type === 'singleChoice' && (
-            <QuestionSingleChoice question={question} onAnswer={handleChoiceAnswer} />
+            <QuestionSingleChoice
+              question={question}
+              initialValue={typeof answer === 'string' ? answer : ''}
+              onAnswer={handleChoiceAnswer}
+            />
           )}
           {(question.type === 'multiChoice' || question.type === 'multiChoiceWithOther') && (
-            <QuestionMultiChoice question={question} onAnswer={handleMultiAnswer} />
+            <QuestionMultiChoice
+              question={question}
+              initialValue={Array.isArray(answer) ? answer : []}
+              onDraft={value => onDraft(value)}
+              onAnswer={handleMultiAnswer}
+            />
           )}
         </section>
       </GlassStepCard>

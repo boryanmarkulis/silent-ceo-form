@@ -22,17 +22,16 @@ export default function Opener({ onBegin, currentQ, totalQ }: OpenerProps) {
   return (
     <main className="screen">
       <GlassStepCard
-        meta="Private founder research"
-        title="We're building something quiet for people running real businesses."
-        hint="For founders who feel one step removed from their own. A few questions, if you have five minutes."
+        title="We're building something silent for people running real businesses."
+        hint="If you're a founder feeling overwhelmed by data and dashboards, we'd love your input."
         tone="hero"
         footer={<ProgressBar currentQ={currentQ} totalQ={totalQ} />}
       >
         <button
           onClick={onBegin}
-          className="primary-action"
+          className="text-button scroll-cta"
         >
-          Begin
+          Scroll to continue <span aria-hidden="true" className="scroll-cta-arrow">↓</span>
         </button>
       </GlassStepCard>
     </main>
