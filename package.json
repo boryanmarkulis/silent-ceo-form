@@ -1,0 +1,30 @@
+{
+  "name": "codex-founder-os-research",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "NODE_OPTIONS='--require ./node-polyfill.cjs' next dev",
+    "build": "NODE_OPTIONS='--require ./node-polyfill.cjs' next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "15.3.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "framer-motion": "^11.3.8",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5",
+    "tailwindcss": "^4",
+    "@tailwindcss/postcss": "^4",
+    "postcss": "^8",
+    "eslint": "^8",
+    "eslint-config-next": "15.3.2"
+  }
+}
