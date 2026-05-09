@@ -118,7 +118,7 @@ export default function FormFlow() {
 
       document.documentElement.style.setProperty(
         '--visual-viewport-height',
-        keyboardOpen ? `${visualViewport.height}px` : '100dvh',
+        `${visualViewport.height}px`,
       )
       document.documentElement.classList.toggle('keyboard-open', keyboardOpen)
     }

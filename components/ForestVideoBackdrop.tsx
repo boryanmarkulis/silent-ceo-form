@@ -35,7 +35,6 @@ export default function ForestVideoBackdrop({
     const previousStep = previousStepRef.current
     if (currentStep > previousStep) {
       cancelReverseAnimation()
-      syncVideoToStep(video, 'forward')
     } else if (currentStep < previousStep) {
       scrubVideoBackward(video)
     }
@@ -45,16 +44,6 @@ export default function ForestVideoBackdrop({
   useEffect(() => {
     return () => cancelReverseAnimation()
   }, [])
-
-  function syncVideoToStep(video: HTMLVideoElement, direction: 'forward' | 'backward') {
-    const targetTime = getStepTargetTime(video)
-
-    if (direction === 'backward') {
-      video.currentTime = targetTime
-    } else if (video.currentTime + 5 < targetTime) {
-      video.currentTime = targetTime
-    }
-  }
 
   function getStepTargetTime(video: HTMLVideoElement) {
     const usableDuration = Math.max(video.duration - 1.5, 1)
@@ -68,7 +57,6 @@ export default function ForestVideoBackdrop({
     const startTime = video.currentTime
     const targetTime = getStepTargetTime(video)
     if (startTime <= targetTime) {
-      video.currentTime = targetTime
       return
     }
 
@@ -131,7 +119,6 @@ export default function ForestVideoBackdrop({
           autoPlay
           preload="auto"
           style={videoStyle}
-          onLoadedMetadata={event => syncVideoToStep(event.currentTarget, 'forward')}
           onEnded={event => replayVideo(event.currentTarget)}
         />
       )}
