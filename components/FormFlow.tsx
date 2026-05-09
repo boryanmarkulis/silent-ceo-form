@@ -111,10 +111,9 @@ export default function FormFlow() {
     const visualViewport = viewport
 
     function syncKeyboardViewport() {
-      const keyboardInset = Math.max(0, window.innerHeight - visualViewport.height - visualViewport.offsetTop)
       const activeElement = document.activeElement
       const typingElement = activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement
-      const keyboardOpen = typingElement && keyboardInset > 80
+      const keyboardOpen = typingElement && visualViewport.height < window.innerHeight - 80
 
       document.documentElement.style.setProperty(
         '--visual-viewport-height',
