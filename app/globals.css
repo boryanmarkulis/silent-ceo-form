@@ -32,10 +32,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  overflow-y: hidden;
 }
 
 html {
   --visual-viewport-height: 100svh;
+  --visual-viewport-offset-top: 0px;
 }
 
 input,
@@ -63,9 +65,10 @@ textarea:focus-visible {
 
 .forest-shell {
   position: relative;
+  height: 100dvh;
   min-height: 100dvh;
   isolation: isolate;
-  overflow: clip;
+  overflow: hidden;
 }
 
 .forest-video-backdrop {
@@ -113,6 +116,10 @@ textarea:focus-visible {
 }
 
 .screen {
+  position: fixed;
+  top: var(--visual-viewport-offset-top, 0px);
+  left: 0;
+  right: 0;
   width: 100%;
   height: var(--visual-viewport-height, 100svh);
   display: grid;
@@ -453,6 +460,15 @@ textarea:focus-visible {
   transform: translateX(-1px);
   color: var(--ink-strong);
   background: rgba(255, 255, 255, 0.24);
+}
+
+.ambient-music {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .progress-wrap {

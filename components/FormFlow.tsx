@@ -7,6 +7,7 @@ import SectionBreak from './SectionBreak'
 import Question from './Question'
 import Closing from './Closing'
 import ForestVideoBackdrop from './ForestVideoBackdrop'
+import AmbientMusic from './AmbientMusic'
 import { section1Questions, section2, section3, section4, allQuestions } from '@/lib/sections'
 import type { Question as QuestionType } from '@/lib/sections'
 
@@ -74,6 +75,7 @@ export default function FormFlow() {
   const [refParam, setRefParam] = useState('')
   const [submitError, setSubmitError] = useState('')
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [transitionDirection, setTransitionDirection] = useState<'forward' | 'backward' | null>(null)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -92,7 +94,10 @@ export default function FormFlow() {
 
   useEffect(() => {
     if (!isTransitioning) return
-    const timer = setTimeout(() => setIsTransitioning(false), 720)
+    const timer = setTimeout(() => {
+      setIsTransitioning(false)
+      setTransitionDirection(null)
+    }, 720)
     return () => clearTimeout(timer)
   }, [isTransitioning])
 
@@ -119,6 +124,10 @@ export default function FormFlow() {
         '--visual-viewport-height',
         `${visualViewport.height}px`,
       )
+      document.documentElement.style.setProperty(
+        '--visual-viewport-offset-top',
+        `${visualViewport.offsetTop}px`,
+      )
       document.documentElement.classList.toggle('keyboard-open', keyboardOpen)
     }
 
@@ -135,6 +144,7 @@ export default function FormFlow() {
       window.removeEventListener('focusout', syncKeyboardViewport)
       document.documentElement.classList.remove('keyboard-open')
       document.documentElement.style.removeProperty('--visual-viewport-height')
+      document.documentElement.style.removeProperty('--visual-viewport-offset-top')
     }
   }, [])
 
@@ -234,12 +244,14 @@ export default function FormFlow() {
       triggerSubmit(updatedData)
     }
 
+    setTransitionDirection('forward')
     setIsTransitioning(true)
     setCurrentStep(nextIndex)
   }
 
   function handleBack() {
     if (currentStep <= 0) return
+    setTransitionDirection('backward')
     setIsTransitioning(true)
     setCurrentStep(prev => prev - 1)
   }
@@ -277,10 +289,9 @@ export default function FormFlow() {
   return (
     <div className="forest-shell">
       <ForestVideoBackdrop
-        currentStep={safeCurrentStep}
-        totalSteps={STEPS.length}
-        isTransitioning={isTransitioning}
+        transitionDirection={transitionDirection}
       />
+      <AmbientMusic />
 
       <AnimatePresence mode="wait">
         <motion.div
