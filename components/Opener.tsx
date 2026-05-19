@@ -23,7 +23,11 @@ export default function Opener({ onBegin, currentQ, totalQ }: OpenerProps) {
     <main className="screen">
       <GlassStepCard
         title="We're building something silent for people running real businesses."
-        hint="If you're a founder feeling overwhelmed by data and dashboards, we'd love your input."
+        hint={<>
+          <span>If you&apos;re feeling overwhelmed by data and dashboards, we&apos;d love your input.</span>
+          <span style={{ display: 'block', marginTop: '0.4em' }}>We&apos;re a small team helping CEOs run with less noise and more clarity. Two minutes of your time helps us build something better.</span>
+          <span style={{ display: 'block', marginTop: '0.4em' }}>As a thank you, we&apos;ll give you three  months free when we launch.</span>
+        </>}
         tone="hero"
         footer={<ProgressBar currentQ={currentQ} totalQ={totalQ} />}
       >

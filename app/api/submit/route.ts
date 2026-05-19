@@ -22,6 +22,8 @@ export async function POST(req: NextRequest) {
       'Blind spots':       JSON.stringify(data.blind_spots),
       'AI COO: first':     data.ai_coo_first,
       'Pricing':           data.pricing,
+      'AI Tools':          data.ai_tools ? JSON.stringify(data.ai_tools) : '',
+      'Coach':             data.coach ?? '',
       'Name':              data.name ?? '',
       'Email':             data.email ?? '',
       'Ref':               data.ref ?? '',

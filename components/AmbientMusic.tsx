@@ -13,7 +13,7 @@ export default function AmbientMusic() {
 
     audio.volume = 0.72
 
-    const removeFallbackListeners = () => {
+    const removeListeners = () => {
       window.removeEventListener('pointerdown', play)
       window.removeEventListener('keydown', play)
       window.removeEventListener('touchstart', play)
@@ -21,7 +21,7 @@ export default function AmbientMusic() {
 
     const play = () => {
       void audio.play()
-        .then(removeFallbackListeners)
+        .then(removeListeners)
         .catch(() => {
           window.addEventListener('pointerdown', play, { once: true })
           window.addEventListener('keydown', play, { once: true })
@@ -29,9 +29,11 @@ export default function AmbientMusic() {
         })
     }
 
-    play()
+    window.addEventListener('pointerdown', play, { once: true })
+    window.addEventListener('keydown', play, { once: true })
+    window.addEventListener('touchstart', play, { once: true })
 
-    return removeFallbackListeners
+    return removeListeners
   }, [])
 
   return (
@@ -39,9 +41,8 @@ export default function AmbientMusic() {
       ref={audioRef}
       className="ambient-music"
       src={MUSIC_SRC}
-      autoPlay
       loop
-      preload="auto"
+      preload="none"
       aria-hidden="true"
     />
   )

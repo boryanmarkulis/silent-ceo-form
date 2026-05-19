@@ -1,21 +1,22 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Opener from './Opener'
 import SectionBreak from './SectionBreak'
 import Question from './Question'
-import Closing from './Closing'
+import ClaimCard from './ClaimCard'
 import ForestVideoBackdrop from './ForestVideoBackdrop'
 import AmbientMusic from './AmbientMusic'
 import { section1Questions, section2, section3, section4, allQuestions } from '@/lib/sections'
 import type { Question as QuestionType } from '@/lib/sections'
+import { isValidEmail } from '@/lib/validation'
 
 type Step =
   | { kind: 'opener' }
   | { kind: 'question'; question: QuestionType }
   | { kind: 'break'; heading: string; subhead: string }
-  | { kind: 'closing' }
+  | { kind: 'claim' }
 
 function buildSteps(): Step[] {
   return [
@@ -25,15 +26,18 @@ function buildSteps(): Step[] {
     ...section2.questions.map(q => ({ kind: 'question' as const, question: q })),
     { kind: 'break', heading: section3.breakHeading, subhead: section3.breakSubhead },
     ...section3.questions.map(q => ({ kind: 'question' as const, question: q })),
-    { kind: 'break', heading: section4.breakHeading, subhead: section4.breakSubhead },
     ...section4.questions.map(q => ({ kind: 'question' as const, question: q })),
-    { kind: 'closing' },
+    { kind: 'claim' },
   ]
 }
 
 const STEPS = buildSteps()
-const TOTAL_QUESTIONS = allQuestions.length // 15
+const TOTAL_QUESTIONS = allQuestions.length
 const TYPING_QUESTION_TYPES = new Set<QuestionType['type']>(['text', 'email', 'url'])
+
+function createSessionId() {
+  return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
 
 function hasQuestionAnswer(question: QuestionType, value: string | string[] | undefined): boolean {
   if (question.optional && (value === undefined || (typeof value === 'string' && value.trim() === ''))) {
@@ -54,7 +58,7 @@ function hasQuestionAnswer(question: QuestionType, value: string | string[] | un
   }
 
   if (question.validation === 'email' && trimmed !== '') {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)
+    return isValidEmail(trimmed)
   }
 
   return trimmed !== '' || Boolean(question.optional)
@@ -71,17 +75,26 @@ function countAnsweredQuestions(stepIndex: number): number {
 
 export default function FormFlow() {
   const [currentStep, setCurrentStep] = useState(0)
+  const currentStepRef = useRef(0)
   const [formData, setFormData] = useState<Record<string, string | string[]>>({})
   const [refParam, setRefParam] = useState('')
-  const [submitError, setSubmitError] = useState('')
+  const [sessionId, setSessionId] = useState('')
+  const sessionIdRef = useRef('')
+  const [recordId, setRecordId] = useState<string | null>(null)
+  const recordIdRef = useRef<string | null>(null)
+  const savePromiseRef = useRef<Promise<string | null> | null>(null)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [transitionDirection, setTransitionDirection] = useState<'forward' | 'backward' | null>(null)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     setRefParam(params.get('ref') ?? '')
+    const nextSessionId = createSessionId()
+    sessionIdRef.current = nextSessionId
+    setSessionId(nextSessionId)
   }, [])
 
+  currentStepRef.current = currentStep
   const safeCurrentStep = Math.min(currentStep, STEPS.length - 1)
   const step = STEPS[safeCurrentStep]
   const completedQ = countAnsweredQuestions(safeCurrentStep)
@@ -147,6 +160,32 @@ export default function FormFlow() {
       document.documentElement.style.removeProperty('--visual-viewport-offset-top')
     }
   }, [])
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      const inTextField = document.activeElement instanceof HTMLInputElement
+        || document.activeElement instanceof HTMLTextAreaElement
+
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+        if (inTextField && event.key === 'ArrowLeft') return
+        event.preventDefault()
+        handleBack()
+      } else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+        if (inTextField && event.key === 'ArrowRight') return
+        event.preventDefault()
+        const activeStep = STEPS[Math.min(currentStep, STEPS.length - 1)]
+        if (activeStep.kind === 'question') {
+          const q = activeStep.question
+          if (!hasQuestionAnswer(q, formData[q.id])) return
+        }
+        handleNext()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep, formData])
 
   useEffect(() => {
     function canScrollInsideCard(target: EventTarget | null, deltaY: number) {
@@ -239,9 +278,8 @@ export default function FormFlow() {
     const nextIndex = safeCurrentStep + 1
     if (nextIndex >= STEPS.length) return
 
-    // When advancing past the last question (email) to closing, trigger submit
-    if (STEPS[nextIndex].kind === 'closing') {
-      triggerSubmit(updatedData)
+    if (currentStepData.kind === 'question') {
+      void saveProgress(updatedData)
     }
 
     setTransitionDirection('forward')
@@ -250,35 +288,93 @@ export default function FormFlow() {
   }
 
   function handleBack() {
-    if (currentStep <= 0) return
+    if (currentStepRef.current <= 0) return
     setTransitionDirection('backward')
     setIsTransitioning(true)
-    setCurrentStep(prev => prev - 1)
+    setCurrentStep(prev => Math.max(0, prev - 1))
   }
 
   function handleDraft(questionId: string, value: string | string[]) {
     setFormData(prev => ({ ...prev, [questionId]: value }))
   }
 
-  async function triggerSubmit(data: Record<string, string | string[]>) {
-    try {
-      setSubmitError('')
-      const res = await fetch('/api/submit', {
-        method: 'POST',
+  function ensureSessionId() {
+    if (!sessionIdRef.current) {
+      const nextSessionId = createSessionId()
+      sessionIdRef.current = nextSessionId
+      setSessionId(nextSessionId)
+    }
+    return sessionIdRef.current
+  }
+
+  async function saveProgress(data: Record<string, string | string[]>) {
+    const previousSave = savePromiseRef.current
+    const savePromise = (async () => {
+      if (previousSave) {
+        await previousSave.catch(() => null)
+      }
+
+      const payload = {
+        ...data,
+        ref: refParam,
+        session_id: ensureSessionId(),
+        claimed: false,
+      }
+
+      if (!recordIdRef.current) {
+        const res = await fetch('/api/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        const json = await res.json()
+        if (!json.ok) {
+          throw new Error(json.error ?? 'Save failed')
+        }
+        const nextRecordId = typeof json.record_id === 'string' ? json.record_id : null
+        recordIdRef.current = nextRecordId
+        setRecordId(nextRecordId)
+        return nextRecordId
+      }
+
+      const currentRecordId = recordIdRef.current
+      const res = await fetch('/api/save', {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, ref: refParam }),
+        body: JSON.stringify({
+          ...payload,
+          record_id: currentRecordId,
+        }),
       })
       const json = await res.json()
       if (!json.ok) {
-        setSubmitError(json.error ?? 'Submission failed')
+        throw new Error(json.error ?? 'Save failed')
       }
-    } catch {
-      setSubmitError('Submission failed')
+      return currentRecordId
+    })()
+
+    savePromiseRef.current = savePromise
+
+    try {
+      return await savePromise
+    } catch (err) {
+      console.error(err)
+      return recordIdRef.current
+    } finally {
+      if (savePromiseRef.current === savePromise) {
+        savePromiseRef.current = null
+      }
     }
   }
 
-  function handleRetry() {
-    triggerSubmit({ ...formData, ref: refParam })
+  async function waitForRecordId() {
+    if (savePromiseRef.current) {
+      return savePromiseRef.current.catch(err => {
+        console.error(err)
+        return recordIdRef.current
+      })
+    }
+    return recordIdRef.current
   }
 
   const currentQuestionStep = step.kind === 'question'
@@ -327,19 +423,25 @@ export default function FormFlow() {
               onDraft={value => handleDraft(step.question.id, value)}
               onAnswer={value => handleNext(value)}
               totalQ={TOTAL_QUESTIONS}
+              onBack={safeCurrentStep > 0 ? handleBack : undefined}
             />
           )}
 
-          {step.kind === 'closing' && (
-            <Closing
-              submitError={submitError}
-              onRetry={handleRetry}
+          {step.kind === 'claim' && (
+            <ClaimCard
+              formData={formData}
+              refParam={refParam}
+              sessionId={sessionId || sessionIdRef.current}
+              recordId={recordId}
+              waitForRecordId={waitForRecordId}
+              onBack={safeCurrentStep > 0 ? handleBack : undefined}
               currentQ={TOTAL_QUESTIONS}
               totalQ={TOTAL_QUESTIONS}
             />
           )}
         </motion.div>
       </AnimatePresence>
+
     </div>
   )
 }

@@ -121,21 +121,9 @@ export default function QuestionMultiChoice({ question, initialValue = [], onDra
         )}
       </div>
 
-      {hasSelection && (
-        <button
-          onClick={handleContinue}
-          className="text-button"
-          style={{ marginTop: '1.6rem' }}
-        >
-          Scroll to continue ↓
-        </button>
-      )}
-
-      {!hasSelection && (
-        <p className="hint-line">
-          Pick at least one option, then scroll to continue ↓
-        </p>
-      )}
+      <p className="hint-line">
+        {hasSelection ? 'Scroll ↓ to continue, ↑ to return' : 'Pick at least one option, then scroll ↓ to continue, ↑ to return'}
+      </p>
     </div>
   )
 }

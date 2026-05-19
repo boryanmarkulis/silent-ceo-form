@@ -9,6 +9,7 @@ interface GlassStepCardProps {
   children?: ReactNode
   footer?: ReactNode
   tone?: 'default' | 'hero'
+  onBack?: () => void
 }
 
 export default function GlassStepCard({
@@ -18,12 +19,15 @@ export default function GlassStepCard({
   children,
   footer,
   tone = 'default',
+  onBack,
 }: GlassStepCardProps) {
   return (
     <section className={`glass-card ${tone === 'hero' ? 'glass-card-hero' : ''}`}>
       <div className="glass-card-header">
         {meta && <p className="glass-meta">{meta}</p>}
-        <h1 className="glass-title">{title}</h1>
+        <div className="glass-title-row">
+          <h1 className="glass-title">{title}</h1>
+        </div>
         {hint && <p className="glass-hint">{hint}</p>}
       </div>
 

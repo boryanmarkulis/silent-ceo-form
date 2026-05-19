@@ -1,10 +1,10 @@
 {
-  "name": "codex-founder-os-research",
+  "name": "silent-ceo-form",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "NODE_OPTIONS='--require ./node-polyfill.cjs' next dev",
-    "build": "NODE_OPTIONS='--require ./node-polyfill.cjs' next build",
+    "dev": "PATH=\"/opt/homebrew/opt/node@20/bin:$PATH\" next dev --turbopack",
+    "build": "PATH=\"/opt/homebrew/opt/node@20/bin:$PATH\" next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"

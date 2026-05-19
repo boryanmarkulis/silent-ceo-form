@@ -71,7 +71,8 @@ export const section1Questions: Question[] = [
     text: 'Rough annual revenue?',
     hint: 'Ballpark is fine',
     options: [
-      { value: '<500k', label: 'Under €500k' },
+      { value: '<100k', label: 'Under €100k' },
+      { value: '100k-500k', label: '€100k – €500k' },
       { value: '500k-2m', label: '€500k – €2M' },
       { value: '2m-10m', label: '€2M – €10M' },
       { value: '10m+', label: '€10M+' },
@@ -83,7 +84,7 @@ export const section1Questions: Question[] = [
 export const section2: Section = {
   id: 'section2',
   breakHeading: 'Now, your stack.',
-  breakSubhead: 'The tools your business runs on.',
+  breakSubhead: "We're building a better way to work with your data, knowing which tools your business runs on helps us prioritize the integrations.",
   questions: [
     {
       id: 'tools_accounting',
@@ -97,6 +98,8 @@ export const section2: Section = {
         { value: 'yuki', label: 'Yuki' },
         { value: 'visma', label: 'Visma' },
         { value: 'afas', label: 'AFAS' },
+        { value: 'quickbooks', label: 'QuickBooks' },
+        { value: 'xero', label: 'Xero' },
         { value: 'none', label: 'Nothing formal' },
       ],
       validation: 'required',
@@ -171,8 +174,8 @@ export const section2: Section = {
 
 export const section3: Section = {
   id: 'section3',
-  breakHeading: 'Now, the hard part.',
-  breakSubhead: "What you can't see from where you sit.",
+  breakHeading: 'Now, the interesting part.',
+  breakSubhead: "What your business knows that you don't, yet.",
   questions: [
     {
       id: 'blind_spots',
@@ -191,15 +194,15 @@ export const section3: Section = {
     {
       id: 'ai_coo_first',
       type: 'text',
-      text: 'If someone could watch your business 24/7, what would you want them tracking?',
-      hint: 'Pick something they could wake you up at 2am for.',
+      text: 'If your business could scream when something goes wrong, what metric would you want it to point out first?',
+      hint: "For example 'our churn rate just hit 21%' or 'there's only 2 months of runway left'",
       placeholder: 'Be specific if you can',
       validation: 'required',
     },
     {
       id: 'pricing',
       type: 'singleChoice',
-      text: 'If they caught two problems you would have missed, what would that be worth?',
+      text: 'If it caught two problems you would have missed, what would that be worth?',
       hint: 'Per month',
       options: [
         { value: '50', label: '€50' },
@@ -220,20 +223,30 @@ export const section4: Section = {
   breakSubhead: 'Completely optional.',
   questions: [
     {
-      id: 'name',
-      type: 'text',
-      text: "What's your name?",
-      placeholder: 'Your name',
-      optional: true,
+      id: 'ai_tools',
+      type: 'multiChoiceWithOther',
+      text: 'Do you use any AI or automation tools in your business?',
+      hint: 'Pick all that apply',
+      options: [
+        { value: 'chatgpt', label: 'ChatGPT / Claude' },
+        { value: 'zapier', label: 'Zapier / Make' },
+        { value: 'notion_ai', label: 'Notion AI' },
+        { value: 'copilot', label: 'Microsoft Copilot' },
+        { value: 'none', label: 'Not yet' },
+      ],
+      validation: 'required',
     },
     {
-      id: 'email',
-      type: 'email',
-      text: 'Want updates as we build?',
-      placeholder: 'your@email.com',
-      hint: 'Rare emails only. Optional.',
-      optional: true,
-      validation: 'email',
+      id: 'coach',
+      type: 'singleChoice',
+      text: 'Do you work with a business coach or advisor?',
+      options: [
+        { value: 'yes_weekly', label: 'Yes — weekly or more' },
+        { value: 'yes_monthly', label: 'Yes — monthly' },
+        { value: 'occasionally', label: 'Occasionally' },
+        { value: 'no', label: 'No' },
+      ],
+      validation: 'required',
     },
   ],
 }

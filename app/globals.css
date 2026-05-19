@@ -28,7 +28,7 @@ body {
   min-height: 100%;
   background: #17251c;
   color: var(--ink);
-  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
@@ -70,6 +70,7 @@ textarea:focus-visible {
   isolation: isolate;
   overflow: hidden;
 }
+
 
 .forest-video-backdrop {
   position: fixed;
@@ -193,6 +194,7 @@ textarea:focus-visible {
 }
 
 .glass-card-header {
+  flex: 0 0 auto;
   padding: clamp(1.35rem, 4vw, 2.35rem) clamp(1.25rem, 4vw, 2.4rem) 0;
 }
 
@@ -203,6 +205,44 @@ textarea:focus-visible {
   letter-spacing: 0.14em;
   line-height: 1.2;
   text-transform: uppercase;
+}
+
+.glass-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.glass-title-row .glass-title {
+  margin-top: 0;
+}
+
+.glass-title-row:first-child {
+  margin-top: 0;
+}
+
+.card-back-arrow {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: none;
+  background: transparent;
+  color: rgba(248, 250, 246, 0.38);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  transition: color 180ms var(--ease), transform 180ms var(--ease);
+}
+
+.card-back-arrow:hover {
+  color: rgba(248, 250, 246, 0.75);
+  transform: translateX(-2px);
 }
 
 .glass-title {
@@ -223,6 +263,18 @@ textarea:focus-visible {
 .glass-card-hero .glass-title {
   font-size: clamp(1.7rem, 3.8vw, 3rem);
 }
+/* Opener: equalize section gaps — title→hint, hint→CTA, CTA→footer */
+.glass-card-hero .glass-hint {
+  margin-top: clamp(1.1rem, 2.5vh, 1.5rem);
+}
+.glass-card-hero .glass-card-body {
+  margin-top: clamp(1.1rem, 2.5vh, 1.5rem);
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.glass-card-hero .glass-card-footer {
+  padding-top: clamp(1.1rem, 2.5vh, 1.5rem);
+}
 
 .glass-hint {
   margin-top: 1rem;
@@ -234,10 +286,13 @@ textarea:focus-visible {
 }
 
 .glass-card-body {
+  flex: 1 1 auto;
+  min-height: 0;
   margin-top: clamp(1.25rem, 3vh, 1.9rem);
-  padding: 0 clamp(1.25rem, 4vw, 2.4rem) clamp(1rem, 3vh, 1.4rem);
+  padding: 0.4rem clamp(1.25rem, 4vw, 2.4rem) clamp(1rem, 3vh, 1.4rem);
   overflow: auto;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.38) transparent;
 }
@@ -252,6 +307,7 @@ textarea:focus-visible {
 }
 
 .glass-card-footer {
+  flex: 0 0 auto;
   padding: 0 clamp(1.25rem, 4vw, 2.4rem) clamp(1.15rem, 3vw, 1.55rem);
 }
 
@@ -354,6 +410,7 @@ textarea:focus-visible {
   color: var(--ink-strong);
   font-size: 1rem;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .native-check {
@@ -435,6 +492,29 @@ textarea:focus-visible {
   transform: translateY(-1px);
   background: var(--ink-strong);
   box-shadow: 0 24px 54px rgba(0, 0, 0, 0.26);
+}
+
+.primary-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+  transform: none;
+  box-shadow: none;
+}
+
+.claim-form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.claim-form .primary-action {
+  margin-top: clamp(0.8rem, 3vh, 1.45rem);
+  border-radius: 17px;
+}
+
+.claim-error {
+  color: var(--error);
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 .back-button {
@@ -520,7 +600,7 @@ textarea:focus-visible {
 
   .keyboard-open .screen {
     place-items: end center;
-    padding-top: max(0.75rem, env(safe-area-inset-top));
+    padding-top: max(1.5rem, env(safe-area-inset-top));
     padding-bottom: 0.65rem;
   }
 
@@ -531,7 +611,7 @@ textarea:focus-visible {
   }
 
   .keyboard-open .glass-card {
-    max-height: calc(var(--visual-viewport-height, 100svh) - 1.4rem);
+    max-height: calc(var(--visual-viewport-height, 100svh) - 2.15rem);
   }
 
   .glass-card-header {
@@ -557,6 +637,7 @@ textarea:focus-visible {
   .choice-label {
     font-size: 0.96rem;
   }
+
 }
 
 @media (max-height: 640px) {

@@ -17,10 +17,19 @@ export const FormSchema = z.object({
   blind_spots:      z.array(z.string()).min(1),
   ai_coo_first:     z.string().min(1),
   pricing:          z.string().min(1),
+  ai_tools:         z.array(z.string()).optional(),
+  coach:            z.string().optional(),
   name:             z.string().optional(),
   email:            z.union([z.string().email(), z.literal('')]).optional(),
   ref:              z.string().optional(),
   submitted_at:     z.string().optional(),
 })
 
+export const PartialFormSchema = FormSchema.partial().extend({
+  session_id: z.string().min(1),
+  record_id: z.string().optional(),
+  claimed: z.boolean().optional(),
+})
+
 export type FormData = z.infer<typeof FormSchema>
+export type PartialFormData = z.infer<typeof PartialFormSchema>

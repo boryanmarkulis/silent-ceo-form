@@ -14,9 +14,10 @@ interface QuestionProps {
   onDraft: (value: string | string[]) => void
   onAnswer: (value: string | string[]) => void
   totalQ: number
+  onBack?: () => void
 }
 
-export default function Question({ question, questionNumber, answer, onDraft, onAnswer, totalQ }: QuestionProps) {
+export default function Question({ question, questionNumber, answer, onDraft, onAnswer, totalQ, onBack }: QuestionProps) {
   function handleTextAnswer(value: string) {
     onAnswer(value)
   }
@@ -35,6 +36,7 @@ export default function Question({ question, questionNumber, answer, onDraft, on
         title={question.text}
         hint={question.hint}
         footer={<ProgressBar currentQ={questionNumber} totalQ={totalQ} />}
+        onBack={onBack}
       >
         <section aria-label="Answer">
           {(question.type === 'text' || question.type === 'email' || question.type === 'url') && (

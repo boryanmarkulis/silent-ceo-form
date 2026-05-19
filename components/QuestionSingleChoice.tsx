@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Question } from '@/lib/sections'
 
 interface QuestionSingleChoiceProps {
@@ -10,7 +10,7 @@ interface QuestionSingleChoiceProps {
 }
 
 export default function QuestionSingleChoice({ question, initialValue = '', onAnswer }: QuestionSingleChoiceProps) {
-  const options = question.options ?? []
+  const options = useMemo(() => question.options ?? [], [question.options])
   const initialSelected = options.findIndex(option => option.value === initialValue)
   const [selected, setSelected] = useState<number>(initialSelected)
 
@@ -36,18 +36,23 @@ export default function QuestionSingleChoice({ question, initialValue = '', onAn
   }, [options, selected, onAnswer])
 
   return (
-    <div className="choice-list">
-      {options.map((opt, i) => (
-        <button
-          key={opt.value}
-          onClick={() => onAnswer(opt.value)}
-          onMouseEnter={() => setSelected(i)}
-          className={`choice-card ${selected === i ? 'is-active' : ''}`}
-        >
-          <span className="choice-index">{i + 1}</span>
-          <span className="choice-label">{opt.label}</span>
-        </button>
-      ))}
+    <div className="choice-list-wrapper">
+      <div className="choice-list">
+        {options.map((opt, i) => (
+          <button
+            type="button"
+            key={opt.value}
+            onClick={() => onAnswer(opt.value)}
+            onMouseEnter={() => setSelected(i)}
+            className={`choice-card ${selected === i ? 'is-active' : ''}`}
+            aria-pressed={selected === i}
+          >
+            <span className="choice-index">{i + 1}</span>
+            <span className="choice-label">{opt.label}</span>
+          </button>
+        ))}
+      </div>
+      <p className="hint-line">Scroll ↓ to continue, ↑ to return</p>
     </div>
   )
 }

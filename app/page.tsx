@@ -1,8 +1,4 @@
-'use client'
-
-import dynamic from 'next/dynamic'
-
-const FormFlow = dynamic(() => import('@/components/FormFlow'), { ssr: false })
+import FormFlow from '@/components/FormFlow'
 
 export default function Home() {
   return <FormFlow />

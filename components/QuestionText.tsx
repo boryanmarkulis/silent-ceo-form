@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type { Question } from '@/lib/sections'
+import { isValidEmail } from '@/lib/validation'
 
 interface QuestionTextProps {
   question: Question
@@ -20,14 +21,17 @@ export default function QuestionText({ question, initialValue = '', onDraft, onA
   const isTextarea = TEXTAREA_IDS.includes(question.id)
 
   useEffect(() => {
+    const textarea = textareaRef.current
+    const input = inputRef.current
     const timer = setTimeout(() => {
-      if (isTextarea) textareaRef.current?.focus()
-      else inputRef.current?.focus()
+      const field = isTextarea ? textarea : input
+      field?.focus()
+      field?.scrollIntoView({ block: 'nearest' })
     }, 500)
     return () => {
       clearTimeout(timer)
-      textareaRef.current?.blur()
-      inputRef.current?.blur()
+      textarea?.blur()
+      input?.blur()
     }
   }, [isTextarea])
 
@@ -43,8 +47,7 @@ export default function QuestionText({ question, initialValue = '', onDraft, onA
       return 'Please enter a value'
     }
     if (question.validation === 'email' && val.trim() !== '') {
-      const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRe.test(val)) return 'Please enter a valid email address'
+      if (!isValidEmail(val)) return 'Please enter a valid email address'
     }
     return ''
   }
@@ -70,7 +73,7 @@ export default function QuestionText({ question, initialValue = '', onDraft, onA
     }
   }
 
-  const hintText = 'Scroll to continue ↓'
+  const hintText = 'Scroll ↓ to continue, ↑ to return'
 
   return (
     <div>
@@ -83,7 +86,8 @@ export default function QuestionText({ question, initialValue = '', onDraft, onA
           onKeyDown={handleKeyDown}
           placeholder={question.placeholder}
           rows={2}
-          style={{ overflow: 'hidden' }}
+          aria-invalid={Boolean(error)}
+          style={{ overflowY: 'auto' }}
         />
       ) : (
         <input
@@ -94,6 +98,7 @@ export default function QuestionText({ question, initialValue = '', onDraft, onA
           onChange={e => handleChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={question.placeholder}
+          aria-invalid={Boolean(error)}
         />
       )}
       {error && (
