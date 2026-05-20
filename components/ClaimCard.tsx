@@ -14,6 +14,7 @@ interface ClaimCardProps {
   currentQ: number
   totalQ: number
   onBack?: () => void
+  onComplete?: () => void
 }
 
 type ClaimStatus = 'idle' | 'submitting' | 'locked' | 'error'
@@ -27,6 +28,7 @@ export default function ClaimCard({
   currentQ,
   totalQ,
   onBack,
+  onComplete,
 }: ClaimCardProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -65,11 +67,43 @@ export default function ClaimCard({
       }
 
       setStatus('locked')
+      onComplete?.()
     } catch (err) {
       console.error(err)
       setStatus('error')
       setErrorMessage('Something went wrong. Please try again.')
     }
+  }
+
+  if (status === 'locked') {
+    return (
+      <main className="screen">
+        <section className="glass-card">
+          <div className="glass-card-header">
+            <div className="glass-title-row">
+              <h1 className="glass-title">Completed ✓</h1>
+            </div>
+            <p className="glass-hint" style={{ marginBottom: 0 }}>
+              We&apos;re keeping things low key for now. If what you wrote sparks something, I&apos;ll reach out personally. Thank you for your time.
+            </p>
+          </div>
+          <div style={{
+            position: 'relative',
+            zIndex: 1,
+            flex: '0 0 auto',
+            padding: 'clamp(1rem, 2.5vh, 1.4rem) clamp(1.25rem, 4vw, 2.4rem)',
+            color: 'var(--ink-muted)',
+            fontSize: '1rem',
+            lineHeight: '1.62',
+          }}>
+            — Miguel
+          </div>
+          <div className="glass-card-footer" style={{ paddingTop: 0 }}>
+            <ProgressBar currentQ={currentQ} totalQ={totalQ} />
+          </div>
+        </section>
+      </main>
+    )
   }
 
   return (
@@ -87,7 +121,7 @@ export default function ClaimCard({
             onChange={event => setName(event.target.value)}
             placeholder="Your name"
             autoComplete="name"
-            disabled={status === 'submitting' || status === 'locked'}
+            disabled={status === 'submitting'}
           />
           <input
             className="text-field"
@@ -96,7 +130,7 @@ export default function ClaimCard({
             onChange={event => setEmail(event.target.value)}
             placeholder="your@email.com"
             autoComplete="email"
-            disabled={status === 'submitting' || status === 'locked'}
+            disabled={status === 'submitting'}
           />
           <button
             className="primary-action"
@@ -104,7 +138,7 @@ export default function ClaimCard({
             onClick={handleSubmit}
             disabled={!canSubmit}
           >
-            {status === 'locked' ? 'Locked' : 'Claim 3 Months Free'}
+            Claim 3 Months Free
           </button>
           {errorMessage && (
             <p className="claim-error">{errorMessage}</p>

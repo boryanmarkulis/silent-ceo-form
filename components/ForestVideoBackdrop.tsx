@@ -9,17 +9,28 @@ interface ForestVideoBackdropProps {
 export default function ForestVideoBackdrop({ transitionDirection }: ForestVideoBackdropProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const prefersReducedMotion = usePrefersReducedMotion()
+  const isMobileLike = useIsMobileLike()
   const shouldLoadVideo = useDeferredMediaLoad(prefersReducedMotion)
 
   useEffect(() => {
     const video = videoRef.current
     if (!video || prefersReducedMotion) return
 
-    video.playbackRate = transitionDirection === 'forward' ? 1.85 : 1.0
-    void video.play().catch(() => {
-      // Browsers can still refuse autoplay in edge cases; the CSS fallback remains readable.
-    })
-  }, [transitionDirection, prefersReducedMotion])
+    if (isMobileLike) {
+      // On mobile: play continuously at normal speed — no rate changes that cause stutter.
+      video.playbackRate = 1.0
+      if (video.paused) {
+        void video.play().catch(() => {})
+      }
+    } else {
+      video.playbackRate = transitionDirection === 'forward' ? 1.85 : 1.0
+      if (video.paused) {
+        void video.play().catch(() => {
+          // Browsers can still refuse autoplay in edge cases; the CSS fallback remains readable.
+        })
+      }
+    }
+  }, [transitionDirection, prefersReducedMotion, isMobileLike])
 
   function replayVideo(video: HTMLVideoElement) {
     video.currentTime = 0
@@ -62,6 +73,32 @@ function usePrefersReducedMotion() {
   }, [])
 
   return reducedMotion
+}
+
+function useIsMobileLike() {
+  const initial = useMemo(() => {
+    if (typeof window === 'undefined') return false
+    return (
+      window.matchMedia('(hover: none) and (pointer: coarse)').matches ||
+      window.matchMedia('(max-width: 768px)').matches
+    )
+  }, [])
+
+  const [isMobile, setIsMobile] = useState(initial)
+
+  useEffect(() => {
+    const touch = window.matchMedia('(hover: none) and (pointer: coarse)')
+    const narrow = window.matchMedia('(max-width: 768px)')
+    const update = () => setIsMobile(touch.matches || narrow.matches)
+    touch.addEventListener('change', update)
+    narrow.addEventListener('change', update)
+    return () => {
+      touch.removeEventListener('change', update)
+      narrow.removeEventListener('change', update)
+    }
+  }, [])
+
+  return isMobile
 }
 
 function useDeferredMediaLoad(prefersReducedMotion: boolean) {

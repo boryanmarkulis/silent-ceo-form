@@ -85,6 +85,8 @@ export default function FormFlow() {
   const savePromiseRef = useRef<Promise<string | null> | null>(null)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [transitionDirection, setTransitionDirection] = useState<'forward' | 'backward' | null>(null)
+  const [completed, setCompleted] = useState(false)
+  const completedRef = useRef(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -206,7 +208,7 @@ export default function FormFlow() {
       }
 
       if (deltaY < 0) {
-        handleBack()
+        if (!completedRef.current) handleBack()
         return
       }
 
@@ -288,10 +290,15 @@ export default function FormFlow() {
   }
 
   function handleBack() {
-    if (currentStepRef.current <= 0) return
+    if (completedRef.current || currentStepRef.current <= 0) return
     setTransitionDirection('backward')
     setIsTransitioning(true)
     setCurrentStep(prev => Math.max(0, prev - 1))
+  }
+
+  function handleComplete() {
+    completedRef.current = true
+    setCompleted(true)
   }
 
   function handleDraft(questionId: string, value: string | string[]) {
@@ -435,6 +442,7 @@ export default function FormFlow() {
               recordId={recordId}
               waitForRecordId={waitForRecordId}
               onBack={safeCurrentStep > 0 ? handleBack : undefined}
+              onComplete={handleComplete}
               currentQ={TOTAL_QUESTIONS}
               totalQ={TOTAL_QUESTIONS}
             />
